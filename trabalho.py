@@ -1,81 +1,78 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
 
-st.set_page_config(page_title="Trabalho", layout="wide")
-
-ufs = [
-    ('RO', 'Norte'), ('AC', 'Norte'), ('AM', 'Norte'), ('RR', 'Norte'), 
-    ('PA', 'Norte'), ('AP', 'Norte'), ('TO', 'Norte'), ('MA', 'Nordeste'), 
-    ('PI', 'Nordeste'), ('CE', 'Nordeste'), ('RN', 'Nordeste'), ('PB', 'Nordeste'), 
-    ('PE', 'Nordeste'), ('AL', 'Nordeste'), ('SE', 'Nordeste'), ('BA', 'Nordeste'), 
-    ('MG', 'Sudeste'), ('ES', 'Sudeste'), ('RJ', 'Sudeste'), ('SP', 'Sudeste'), 
-    ('PR', 'Sul'), ('SC', 'Sul'), ('RS', 'Sul'), ('MS', 'Centro-Oeste'), 
-    ('MT', 'Centro-Oeste'), ('GO', 'Centro-Oeste'), ('DF', 'Centro-Oeste')
-]
-
-#Criação simulados
-np.random.seed(42)
-dados = []
-for est, rgn in ufs:
-    # Dados de 2012
-    t1 = np.random.normal(loc=7.5 if rgn in ['Sul', 'Centro-Oeste'] else 11.0, scale=1.5)
-    t2 = np.random.normal(loc=35.0 if rgn in ['Sul', 'Sudeste'] else 52.0, scale=4.0)
-    dados.append({'UF': est, 'R': rgn, 'Ano': 2012, 'Des': round(max(4.0, t1), 1), 'Inf': round(t2, 1)})
-    # Dados de 2022 (com aumento no desemprego e informalidade)
-    dados.append({'UF': est, 'R': rgn, 'Ano': 2022, 'Des': round(max(5.0, t1 + 2.0), 1), 'Inf': round(t2 + 1.5, 1)})
-
-
-df_ = pd.DataFrame(dados)
-
+st.set_page_config(page_title="Painel de Emprego", layout="wide")
 
 st.title("Painel de Emprego: Ministério, SEBRAE e Indústria")
+st.write("Fonte dos dados: Agência de Notícias do IBGE (PNAD Contínua)")
 
-ano = st.sidebar.selectbox("Escolha o Ano", options=df_['Ano'].unique())
-reg = st.sidebar.multiselect("Escolha as Regiões", options=df_['R'].unique(), default=df_['R'].unique())
+# Tabela
+dados_projeto = [
+    # Dados de 2012
+    {'UF': 'SP', 'Regiao': 'Sudeste', 'Ano': 2012, 'Desemprego': 6.9, 'Informalidade': 35.0, 'Trabalhadores': 32.8, 'Tipo': 'Com Carteira'},
+    {'UF': 'RJ', 'Regiao': 'Sudeste', 'Ano': 2012, 'Desemprego': 7.5, 'Informalidade': 36.5, 'Trabalhadores': 10.5, 'Tipo': 'Sem Carteira'},
+    {'UF': 'MG', 'Regiao': 'Sudeste', 'Ano': 2012, 'Desemprego': 6.2, 'Informalidade': 38.0, 'Trabalhadores': 20.1, 'Tipo': 'Conta Própria'},
+    {'UF': 'BA', 'Regiao': 'Nordeste', 'Ano': 2012, 'Desemprego': 9.2, 'Informalidade': 48.0, 'Trabalhadores': 5.1, 'Tipo': 'Doméstico'},
+    {'UF': 'PR', 'Regiao': 'Sul', 'Ano': 2012, 'Desemprego': 5.1, 'Informalidade': 31.0, 'Trabalhadores': 21.1, 'Tipo': 'Outros'},
+    {'UF': 'AM', 'Regiao': 'Norte', 'Ano': 2012, 'Desemprego': 8.0, 'Informalidade': 45.0, 'Trabalhadores': 0.0, 'Tipo': 'Nenhum'},
+    {'UF': 'MT', 'Regiao': 'Centro-Oeste', 'Ano': 2012, 'Desemprego': 5.8, 'Informalidade': 34.0, 'Trabalhadores': 0.0, 'Tipo': 'Nenhum'},
 
-sub = df_[(df_['Ano'] == ano) & (df_['R'].isin(reg))]
+    # Dados de 2022
+    {'UF': 'SP', 'Regiao': 'Sudeste', 'Ano': 2022, 'Desemprego': 9.0, 'Informalidade': 38.2, 'Trabalhadores': 35.9, 'Tipo': 'Com Carteira'},
+    {'UF': 'RJ', 'Regiao': 'Sudeste', 'Ano': 2022, 'Desemprego': 10.1, 'Informalidade': 39.0, 'Trabalhadores': 12.9, 'Tipo': 'Sem Carteira'},
+    {'UF': 'MG', 'Regiao': 'Sudeste', 'Ano': 2022, 'Desemprego': 8.2, 'Informalidade': 40.1, 'Trabalhadores': 25.5, 'Tipo': 'Conta Própria'},
+    {'UF': 'BA', 'Regiao': 'Nordeste', 'Ano': 2022, 'Desemprego': 12.5, 'Informalidade': 51.3, 'Trabalhadores': 5.8, 'Tipo': 'Doméstico'},
+    {'UF': 'PR', 'Regiao': 'Sul', 'Ano': 2022, 'Desemprego': 6.5, 'Informalidade': 33.4, 'Trabalhadores': 17.9, 'Tipo': 'Outros'},
+    {'UF': 'AM', 'Regiao': 'Norte', 'Ano': 2022, 'Desemprego': 10.5, 'Informalidade': 49.2, 'Trabalhadores': 0.0, 'Tipo': 'Nenhum'},
+    {'UF': 'MT', 'Regiao': 'Centro-Oeste', 'Ano': 2022, 'Desemprego': 7.2, 'Informalidade': 36.8, 'Trabalhadores': 0.0, 'Tipo': 'Nenhum'}
+]
 
-st.subheader(f"Resultados para o ano de {ano}")
+df = pd.DataFrame(dados_projeto)
 
-#Médias e medianas
-if not sub.empty:
-    med = sub['Des'].mean()
-    mda = sub['Des'].median()
+
+st.sidebar.write("Filtros")
+ano_escolhido = st.sidebar.selectbox("Escolha o Ano:", options=[2012, 2022])
+regiao_escolhida = st.sidebar.multiselect("Escolha as Regiões:", options=['Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste'], default=['Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste'])
+
+dados_filtrados = df[(df['Ano'] == ano_escolhido) & (df['Regiao'].isin(regiao_escolhida))]
+
+st.subheader(f"Resultados para o ano de {ano_escolhido}")
+
+# Médias e medianas simples
+if not dados_filtrados.empty:
+    media_desemprego = dados_filtrados['Desemprego'].mean()
+    mediana_desemprego = dados_filtrados['Desemprego'].median()
 else:
-    med, mda = 0.0, 0.0
+    media_desemprego = 0
+    mediana_desemprego = 0
+
+st.write(f"Média de Desemprego: {media_desemprego:.1f}%")
+st.write(f"Mediana de Desemprego: {mediana_desemprego:.1f}%")
 
 
-col1, col2 = st.columns(2)
-with col1:
-    st.metric(label="Média de Desemprego", value=f"{med:.1f}%")
-with col2:
-    st.metric(label="Mediana de Desemprego", value=f"{mda:.1f}%")
-
-st.write("---")
-
-# gerar gráficos
 st.write("Gráficos de Análise")
-fig1 = px.box(sub, x='R', y='Des', title="Distribuição do Desemprego por Região (Visão Ministério)", color='R')
-st.plotly_chart(fig1)
 
-sub_ord = sub.sort_values(by='Des', ascending=False)
-fig2 = px.bar(sub_ord, x='UF', y='Des', color='R', title="Ranking de Desemprego por Estado (Visão Indústria/SEBRAE)")
-st.plotly_chart(fig2)
+# Gráfico de Pizza
+dados_para_pizza = dados_filtrados[dados_filtrados['Trabalhadores'] > 0]
+fig_pizza = px.pie(dados_para_pizza, values='Trabalhadores', names='Tipo', title=f"Distribuição da População Ocupada em {ano_escolhido} (em Milhões de Pessoas)")
+st.plotly_chart(fig_pizza)
 
-st.write("---")
+# Gráfico de barras
+fig_barra = px.bar(dados_filtrados, x='UF', y='Desemprego', color='Regiao', title="Ranking de Desemprego por Estado (Visão Indústria/SEBRAE)")
+st.plotly_chart(fig_barra)
 
-# conclusão extra
-st.write("Conclusão do Grupo para a Banca")
-if med > mda:
+# Gráfico de boxplot
+fig_box = px.box(dados_filtrados, x='Regiao', y='Desemprego', title="Distribuição do Desemprego por Região (Visão Ministério)")
+st.plotly_chart(fig_box)
+
+
+st.write("Conclusão para a Banca")
+
+if media_desemprego > mediana_desemprego:
     st.write("Para a Ministra: A média deu maior que a mediana. Isso significa que existem alguns estados com o desemprego muito alto, puxando a média para cima. O Ministério deve focar neles.")
-elif med < mda:
-    st.write("Para a Ministra: A média deu menor que a mediana. Isso significa que a maioria dos estados está com desemprego alto, mas poucos estados muito baixos puxaram a média para baixo.")
 else:
-    st.write("Para a Ministra: A média e a mediana são quase iguais, o desemprego está bem distribuído pelo país.")
+    st.write("Para a Ministra: O desemprego está distribuído de forma equilibrada entre as regiões selecionadas.")
 
-st.markdown(f"""
-Foco SEBRAE: A informalidade alta exige incentivos para que microempresas saiam da ilegalidade.
-Foco Indústria: Estados com muito desemprego têm mais mão de obra disponível para novas fábricas.
-""")
+st.write("Foco SEBRAE: Como o gráfico de pizza mostra que muita gente trabalha por conta própria ou sem carteira assinada, exige incentivos para que microempresas saiam da ilegalidade.")
+st.write("Foco Indústria: Estados com muito desemprego no ranking têm mais mão de obra disponível para novas fábricas.")
